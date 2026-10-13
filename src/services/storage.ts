@@ -1,6 +1,7 @@
 /**
  * Mazao ERP Authoritative Storage & Offline Synchronization Engine
- * Local-First architecture using IndexedDB / LocalStorage with Outbox Queue
+ * Local-First architecture using IndexedDB / LocalStorage with Outbox Queue,
+ * Granular Audit Logging, Role-Based Access Control, and Conflict Resolution.
  */
 
 import {
@@ -12,7 +13,13 @@ import {
   StockMovement,
   LedgerEntry,
   OutboxItem,
-  FolioCharge
+  FolioCharge,
+  StaffUser,
+  UserRole,
+  Permission,
+  ROLE_PERMISSIONS,
+  ShiftAuditLog,
+  SyncConflict
 } from '../types/erp';
 
 // Seed tenants
@@ -71,6 +78,34 @@ export const INITIAL_TENANTS: TenantProfile[] = [
   },
 ];
 
+// Seed staff users with distinct RBAC roles
+export const INITIAL_STAFF: StaffUser[] = [
+  {
+    id: 'staff-1',
+    name: 'Jane Mwangi',
+    role: 'cashier',
+    pin: '1111',
+    title: 'Lead POS Cashier',
+    badgeNumber: 'CSH-042',
+  },
+  {
+    id: 'staff-2',
+    name: 'David Kibet',
+    role: 'manager',
+    pin: '2222',
+    title: 'Shift Operations Manager',
+    badgeNumber: 'MGR-018',
+  },
+  {
+    id: 'staff-3',
+    name: 'Sarah Chen',
+    role: 'admin',
+    pin: '9999',
+    title: 'General Store Administrator',
+    badgeNumber: 'ADM-001',
+  },
+];
+
 // Seed products per tenant
 export const INITIAL_PRODUCTS: Record<string, ProductItem[]> = {
   'tenant-retail': [
@@ -81,7 +116,7 @@ export const INITIAL_PRODUCTS: Record<string, ProductItem[]> = {
     { id: 'ret-5', sku: 'RET-SUGAR-2KG', barcode: '61611005', name: 'Pure White Sugar 2kg', category: 'Pantry', costPrice: 280, sellingPrice: 360, stockOnHand: 45, reorderPoint: 15, unit: 'bag' },
     { id: 'ret-6', sku: 'RET-SOAP-BAR', barcode: '61611006', name: 'Antibacterial Bar Soap', category: 'Toiletries', costPrice: 55, sellingPrice: 80, stockOnHand: 190, reorderPoint: 40, unit: 'pcs' },
     { id: 'ret-7', sku: 'RET-NAILS-2IN', barcode: '61611007', name: 'Steel Wire Nails 2-Inch (1kg)', category: 'Hardware', costPrice: 160, sellingPrice: 240, stockOnHand: 52, reorderPoint: 15, unit: 'kg' },
-    { id: 'ret-8', sku: 'RET-CEMENT-50KG', barcode: '61611008', name: 'Portland Cement 50kg', category: 'Hardware', costPrice: 680, sellingPrice: 820, stockOnHand: 18, reorderPoint: 25, unit: 'bag' }, // low stock
+    { id: 'ret-8', sku: 'RET-CEMENT-50KG', barcode: '61611008', name: 'Portland Cement 50kg', category: 'Hardware', costPrice: 680, sellingPrice: 820, stockOnHand: 18, reorderPoint: 25, unit: 'bag' },
   ],
   'tenant-lodge': [
     { id: 'lod-1', sku: 'LOD-COCKTAIL-SUN', barcode: '72722001', name: 'Sundowner Gin Fizz', category: 'Bar', costPrice: 4, sellingPrice: 14, stockOnHand: 120, reorderPoint: 25, unit: 'gls', fastKey: '1' },
@@ -108,7 +143,7 @@ export const INITIAL_PRODUCTS: Record<string, ProductItem[]> = {
   ],
 };
 
-// Seed rooms (primarily for lodge and estate accommodations)
+// Seed rooms
 export const INITIAL_ROOMS: Room[] = [
   {
     id: 'rm-101',
@@ -197,6 +232,112 @@ export const INITIAL_ROOMS: Room[] = [
   },
 ];
 
+// Seed Granular Shift Audit Log entries
+export const INITIAL_AUDIT_LOGS: ShiftAuditLog[] = [
+  {
+    id: 'aud-1',
+    shiftId: 'shift-active',
+    timestamp: new Date(Date.now() - 3600 * 2800).toISOString(),
+    staffName: 'Jane Mwangi',
+    staffRole: 'cashier',
+    action: 'opening_float',
+    details: 'Initial till opening float counted and locked into cash drawer',
+    amount: 1500,
+    authorizedBy: 'David Kibet (Manager)',
+    flagSeverity: 'info',
+  },
+  {
+    id: 'aud-2',
+    shiftId: 'shift-active',
+    timestamp: new Date(Date.now() - 3600 * 1800).toISOString(),
+    staffName: 'Jane Mwangi',
+    staffRole: 'cashier',
+    action: 'void_line_item',
+    details: 'Voided duplicate Portland Cement 50kg bag prior to settlement',
+    amount: 820,
+    authorizedBy: 'David Kibet (Manager PIN: 2222)',
+    flagSeverity: 'warning',
+  },
+  {
+    id: 'aud-3',
+    shiftId: 'shift-active',
+    timestamp: new Date(Date.now() - 3600 * 1100).toISOString(),
+    staffName: 'David Kibet',
+    staffRole: 'manager',
+    action: 'price_override',
+    details: 'Mid-shift promotional discount override on Estate Coffee 250g',
+    amount: 55,
+    authorizedBy: 'Self-Authorized (MGR-018)',
+    flagSeverity: 'warning',
+  },
+  {
+    id: 'aud-4',
+    shiftId: 'shift-active',
+    timestamp: new Date(Date.now() - 3600 * 450).toISOString(),
+    staffName: 'Jane Mwangi',
+    staffRole: 'cashier',
+    action: 'cash_payout',
+    details: 'Till payout disbursed for express courier parcel delivery',
+    amount: 250,
+    authorizedBy: 'David Kibet (Manager)',
+    flagSeverity: 'info',
+  },
+  {
+    id: 'aud-5',
+    shiftId: 'shift-active',
+    timestamp: new Date(Date.now() - 3600 * 200).toISOString(),
+    staffName: 'Sarah Chen',
+    staffRole: 'admin',
+    action: 'emergency_drawer_kick',
+    details: 'Hardware supervisor manual drawer latch release for audit count inspection',
+    authorizedBy: 'Sarah Chen (Admin Badge ADM-001)',
+    flagSeverity: 'alert',
+  },
+];
+
+// Seed Offline Sync Conflicts
+export const INITIAL_CONFLICTS: SyncConflict[] = [
+  {
+    id: 'conf-1',
+    entityType: 'stock_delta',
+    entityId: 'ret-1',
+    title: 'Concurrent Offline Stock Decrement (Milk 1L)',
+    clientDevice: 'Mobile Tablet POS Terminal 02',
+    serverState: { stockOnHand: 140, lastEvent: 'Restock +10 at 09:12' },
+    clientState: { stockOnHand: 138, delta: -2, lastEvent: 'Offline Sale #ORD-4491 at 09:15' },
+    conflictStrategy: 'commutative_delta',
+    status: 'auto_resolved',
+    timestamp: new Date(Date.now() - 1800 * 1000).toISOString(),
+    resolutionDetails: 'CRDT Commutative Delta applied: net -2 deducted from authoritative base 140. Authoritative balance: 138. Zero lost updates.',
+  },
+  {
+    id: 'conf-2',
+    entityType: 'room_booking',
+    entityId: 'rm-101',
+    title: 'Concurrent Reservation on Savanna Tent 101',
+    clientDevice: 'Offline Safari Desk Terminal',
+    serverState: { roomNumber: '101', guest: 'Elena Rostova', checkInTimestamp: '09:05:00Z' },
+    clientState: { roomNumber: '101', guest: 'Dr. Kwame Osei', checkInTimestamp: '09:08:12Z' },
+    conflictStrategy: 'first_write_wins',
+    status: 'auto_resolved',
+    timestamp: new Date(Date.now() - 1200 * 1000).toISOString(),
+    resolutionDetails: 'First-Write-Wins upheld Elena Rostova on Rm 101. Offline guest Dr. Kwame Osei automatically upgraded to equivalent Chalet Rm 202 without collision.',
+  },
+  {
+    id: 'conf-3',
+    entityType: 'price_override',
+    entityId: 'ret-8',
+    title: 'Offline Emergency Price Override (Portland Cement)',
+    clientDevice: 'Yard Barcode Gun #3',
+    serverState: { sellingPrice: 820.0, updatedAt: '08:00:00Z' },
+    clientState: { sellingPrice: 790.0, overrideReason: 'Bulk Contractor Discount during outage', cashier: 'Jane Mwangi' },
+    conflictStrategy: 'escalation_required',
+    status: 'escalation_pending',
+    timestamp: new Date(Date.now() - 600 * 1000).toISOString(),
+    resolutionDetails: 'Awaiting Shift Manager sign-off: accept client offline concession ($790) or maintain standard server catalog price ($820).',
+  },
+];
+
 class StorageEngine {
   private tenantId: string = 'tenant-retail';
   private isSimulatedOnline: boolean = true;
@@ -208,6 +349,10 @@ class StorageEngine {
   private stockMovements: StockMovement[] = [];
   private ledgerEntries: LedgerEntry[] = [];
   private outboxQueue: OutboxItem[] = [];
+  private staffUsers: StaffUser[] = INITIAL_STAFF;
+  private activeStaffId: string = 'staff-1';
+  private auditLogs: ShiftAuditLog[] = [];
+  private conflicts: SyncConflict[] = [];
   private listeners: Set<() => void> = new Set();
 
   constructor() {
@@ -215,7 +360,6 @@ class StorageEngine {
   }
 
   private init() {
-    // Check localStorage
     const savedTenant = localStorage.getItem('mazao_active_tenant');
     if (savedTenant) this.tenantId = savedTenant;
 
@@ -229,13 +373,12 @@ class StorageEngine {
     this.rooms = savedRooms ? JSON.parse(savedRooms) : INITIAL_ROOMS;
 
     const savedOrders = localStorage.getItem('mazao_orders');
-    this.orders = savedOrders ? JSON.parse(savedOrders) : [];
+    this.orders = savedOrders ? JSON.parse(savedOrders) : this.seedInitialOrders();
 
     const savedActiveShift = localStorage.getItem('mazao_active_shift');
     if (savedActiveShift) {
       this.activeShift = JSON.parse(savedActiveShift);
     } else {
-      // Default initial open shift
       this.activeShift = {
         id: 'shift-' + Date.now(),
         tenantId: this.tenantId,
@@ -263,6 +406,15 @@ class StorageEngine {
 
     const savedOutbox = localStorage.getItem('mazao_outbox');
     this.outboxQueue = savedOutbox ? JSON.parse(savedOutbox) : [];
+
+    const savedStaffId = localStorage.getItem('mazao_active_staff_id');
+    if (savedStaffId) this.activeStaffId = savedStaffId;
+
+    const savedAudit = localStorage.getItem('mazao_shift_audit');
+    this.auditLogs = savedAudit ? JSON.parse(savedAudit) : INITIAL_AUDIT_LOGS;
+
+    const savedConflicts = localStorage.getItem('mazao_sync_conflicts');
+    this.conflicts = savedConflicts ? JSON.parse(savedConflicts) : INITIAL_CONFLICTS;
   }
 
   private persist() {
@@ -281,6 +433,9 @@ class StorageEngine {
       localStorage.setItem('mazao_stock_movements', JSON.stringify(this.stockMovements));
       localStorage.setItem('mazao_ledger', JSON.stringify(this.ledgerEntries));
       localStorage.setItem('mazao_outbox', JSON.stringify(this.outboxQueue));
+      localStorage.setItem('mazao_active_staff_id', this.activeStaffId);
+      localStorage.setItem('mazao_shift_audit', JSON.stringify(this.auditLogs));
+      localStorage.setItem('mazao_sync_conflicts', JSON.stringify(this.conflicts));
     } catch {
       // storage quota fallback
     }
@@ -298,6 +453,147 @@ class StorageEngine {
     for (const listener of this.listeners) {
       listener();
     }
+  }
+
+  // --- Staff & Granular RBAC Permissions ---
+  public getStaffUsers(): StaffUser[] {
+    return this.staffUsers;
+  }
+
+  public getActiveStaff(): StaffUser {
+    return this.staffUsers.find(s => s.id === this.activeStaffId) || this.staffUsers[0];
+  }
+
+  public switchStaff(staffId: string): void {
+    this.activeStaffId = staffId;
+    const staff = this.getActiveStaff();
+    if (this.activeShift && this.activeShift.status === 'open') {
+      this.activeShift.cashierName = staff.name;
+    }
+    this.persist();
+  }
+
+  public hasPermission(perm: Permission): boolean {
+    const staff = this.getActiveStaff();
+    const perms = ROLE_PERMISSIONS[staff.role] || [];
+    return perms.includes(perm);
+  }
+
+  // --- Granular Shift Audit Log Engine ---
+  public getAuditLogs(shiftId?: string): ShiftAuditLog[] {
+    if (shiftId) {
+      return this.auditLogs.filter(a => a.shiftId === shiftId);
+    }
+    return this.auditLogs;
+  }
+
+  public recordAuditLog(entry: {
+    shiftId?: string;
+    action: ShiftAuditLog['action'];
+    details: string;
+    amount?: number;
+    authorizedBy?: string;
+    flagSeverity?: ShiftAuditLog['flagSeverity'];
+  }): ShiftAuditLog {
+    const staff = this.getActiveStaff();
+    const newEntry: ShiftAuditLog = {
+      id: 'aud-' + Date.now() + '-' + Math.random().toString(36).substring(2, 5),
+      shiftId: entry.shiftId || (this.activeShift ? this.activeShift.id : 'shift-general'),
+      timestamp: new Date().toISOString(),
+      staffName: staff.name,
+      staffRole: staff.role,
+      action: entry.action,
+      details: entry.details,
+      amount: entry.amount,
+      authorizedBy: entry.authorizedBy || `${staff.name} (${staff.title})`,
+      flagSeverity: entry.flagSeverity || (entry.action === 'price_override' || entry.action === 'void_line_item' ? 'warning' : 'info'),
+    };
+
+    this.auditLogs.unshift(newEntry);
+    this.persist();
+    return newEntry;
+  }
+
+  // --- Advanced Offline Conflict Resolution Engine ---
+  public getConflicts(): SyncConflict[] {
+    return this.conflicts;
+  }
+
+  public resolveConflict(conflictId: string, choice: 'accept_client' | 'accept_server' | 'auto_reconcile'): void {
+    const conflict = this.conflicts.find(c => c.id === conflictId);
+    if (!conflict) return;
+
+    if (conflict.entityType === 'price_override') {
+      if (choice === 'accept_client') {
+        const prod = (this.products[this.tenantId] || []).find(p => p.id === conflict.entityId);
+        if (prod) {
+          prod.sellingPrice = conflict.clientState.sellingPrice;
+        }
+        conflict.resolutionDetails = `Manager accepted client concession rate ($${conflict.clientState.sellingPrice}). Price updated.`;
+      } else {
+        conflict.resolutionDetails = `Manager rejected concession rate. Authoritative server price ($${conflict.serverState.sellingPrice}) maintained.`;
+      }
+    } else if (conflict.entityType === 'stock_delta') {
+      conflict.resolutionDetails = 'CRDT Commutative Delta reaffirmed. Balance synchronized.';
+    } else if (conflict.entityType === 'room_booking') {
+      conflict.resolutionDetails = 'Booking conflict resolved. Room upgrade confirmed.';
+    }
+
+    conflict.status = 'manually_resolved';
+    this.persist();
+  }
+
+  public simulateNewConflict(type: 'stock_delta' | 'room_booking' | 'price_override'): SyncConflict {
+    const now = new Date().toISOString();
+    let newConf: SyncConflict;
+
+    if (type === 'stock_delta') {
+      newConf = {
+        id: 'conf-' + Date.now(),
+        entityType: 'stock_delta',
+        entityId: 'ret-2',
+        title: 'Concurrent Offline Stock Decrement (Sliced Bread 800g)',
+        clientDevice: 'Mobile Register #4',
+        serverState: { stockOnHand: 84, lastEvent: 'Restock +20' },
+        clientState: { stockOnHand: 80, delta: -4, lastEvent: 'Offline Sale #ORD-9912' },
+        conflictStrategy: 'commutative_delta',
+        status: 'auto_resolved',
+        timestamp: now,
+        resolutionDetails: 'CRDT Commutative Delta applied: net -4 merged with server 84. Authoritative balance: 80.',
+      };
+    } else if (type === 'room_booking') {
+      newConf = {
+        id: 'conf-' + Date.now(),
+        entityType: 'room_booking',
+        entityId: 'rm-102',
+        title: 'Concurrent Offline Check-in Clash (Cottage 102)',
+        clientDevice: 'Offline iPad Reception Frontdesk',
+        serverState: { roomNumber: '102', guest: 'Marcus Vance', checkInTime: '10:00Z' },
+        clientState: { roomNumber: '102', guest: 'Lady Beatrix Finch', checkInTime: '10:03Z' },
+        conflictStrategy: 'first_write_wins',
+        status: 'auto_resolved',
+        timestamp: now,
+        resolutionDetails: 'First-Write-Wins: Marcus Vance retained Rm 102. Lady Beatrix Finch routed to equivalent Valley Suite 201.',
+      };
+    } else {
+      newConf = {
+        id: 'conf-' + Date.now(),
+        entityType: 'price_override',
+        entityId: 'ret-3',
+        title: 'Mid-Shift Offline Price Override (Ground Coffee 250g)',
+        clientDevice: 'Curbside Drive-thru POS',
+        serverState: { sellingPrice: 550, updatedAt: '07:30Z' },
+        clientState: { sellingPrice: 500, overrideReason: 'Rainy Day Promotion', cashier: this.getActiveStaff().name },
+        conflictStrategy: 'escalation_required',
+        status: 'escalation_pending',
+        timestamp: now,
+        resolutionDetails: 'Pending Supervisor Sign-Off: approve curbside concession ($500) or keep base ($550).',
+      };
+    }
+
+    this.conflicts.unshift(newConf);
+    this.persist();
+    return newConf;
   }
 
   // --- Tenants ---
@@ -341,17 +637,13 @@ class StorageEngine {
   public flushOutboxQueue(): void {
     if (!this.isSimulatedOnline) return;
 
-    // Simulate replay synchronization to authoritative PostgreSQL
-    let replayedCount = 0;
     this.outboxQueue = this.outboxQueue.map(item => {
       if (item.status === 'pending') {
-        replayedCount++;
         return { ...item, status: 'synced', attempts: item.attempts + 1 };
       }
       return item;
     });
 
-    // Mark pending orders as synced
     this.orders = this.orders.map(o => ({
       ...o,
       syncStatus: 'synced',
@@ -390,7 +682,6 @@ class StorageEngine {
 
     this.stockMovements.unshift(movement);
 
-    // Outbox queue entry
     this.outboxQueue.unshift({
       id: 'outbox-stock-' + Date.now(),
       entityType: 'stock',
@@ -428,8 +719,7 @@ class StorageEngine {
     rm.guestPhone = phone;
     rm.checkInDate = now.toISOString().slice(0, 10);
     rm.checkOutDate = checkOut.toISOString().slice(0, 10);
-    
-    // Add initial accommodation charges
+
     const roomCharge: FolioCharge = {
       id: 'chg-' + Date.now(),
       timestamp: new Date().toISOString(),
@@ -439,7 +729,6 @@ class StorageEngine {
     };
     rm.folioCharges.push(roomCharge);
 
-    // Ledger entry for Accounts Receivable vs Accommodation Revenue
     this.recordLedgerEntry(
       'AR-' + rm.number,
       `Guest Check-in Rm ${rm.number} (${guestName})`,
@@ -492,7 +781,6 @@ class StorageEngine {
     const finalizedCharges = [...rm.folioCharges];
     const totalDue = finalizedCharges.reduce((acc, c) => acc + c.amount, 0);
 
-    // Settle folio in General Ledger: Cash/Card vs Accounts Receivable
     if (totalDue > 0) {
       this.recordLedgerEntry(
         'FOLIO-SETTLE-' + rm.number,
@@ -540,7 +828,6 @@ class StorageEngine {
       printed: false,
     };
 
-    // 1. Deduct Inventory
     for (const item of order.items) {
       this.adjustStock(
         item.product.id,
@@ -550,7 +837,6 @@ class StorageEngine {
       );
     }
 
-    // 2. Room Folio Cross-Module Routing
     if (order.paymentMethod === 'room_folio' && order.roomChargeRef) {
       this.addFolioCharge(order.roomChargeRef.roomId, {
         description: `POS Bill #${order.orderNumber} (${order.items.map(i => `${i.quantity}x ${i.product.name}`).slice(0, 2).join(', ')})`,
@@ -560,7 +846,6 @@ class StorageEngine {
       });
     }
 
-    // 3. Update Active Shift Balances
     if (this.activeShift && this.activeShift.status === 'open') {
       if (order.paymentMethod === 'cash') {
         this.activeShift.cashSales += order.total;
@@ -574,7 +859,6 @@ class StorageEngine {
       }
     }
 
-    // 4. Double-Entry General Ledger Journal
     const debitAccount =
       order.paymentMethod === 'cash'
         ? 'Cash in Till (Drawer)'
@@ -604,10 +888,8 @@ class StorageEngine {
       );
     }
 
-    // 5. Append to Orders
     this.orders.unshift(order);
 
-    // 6. Outbox Entry for Offline Durability
     this.outboxQueue.unshift({
       id: 'outbox-order-' + order.id,
       entityType: 'sale',
@@ -657,6 +939,14 @@ class StorageEngine {
       openingFloat
     );
 
+    this.recordAuditLog({
+      shiftId: newShift.id,
+      action: 'opening_float',
+      details: `Shift till opened with opening float count of ${this.getActiveTenant().currencySymbol} ${openingFloat.toFixed(2)}`,
+      amount: openingFloat,
+      flagSeverity: 'info',
+    });
+
     this.persist();
     return newShift;
   }
@@ -676,6 +966,14 @@ class StorageEngine {
       amount
     );
 
+    this.recordAuditLog({
+      shiftId: this.activeShift.id,
+      action: 'cash_payout',
+      details: `Cash payout from drawer: ${reason}`,
+      amount,
+      flagSeverity: 'info',
+    });
+
     this.persist();
   }
 
@@ -693,7 +991,6 @@ class StorageEngine {
       zReportNumber: 'Z-' + new Date().getFullYear() + '-' + Math.floor(1000 + Math.random() * 9000),
     };
 
-    // Ledger adjustment if discrepancy exists
     if (discrepancy !== 0) {
       if (discrepancy > 0) {
         this.recordLedgerEntry(
@@ -715,6 +1012,14 @@ class StorageEngine {
         );
       }
     }
+
+    this.recordAuditLog({
+      shiftId: closedShift.id,
+      action: 'shift_close_variance',
+      details: `Shift closed. Expected: ${this.getActiveTenant().currencySymbol} ${closedShift.expectedCash.toFixed(2)}, Counted: ${this.getActiveTenant().currencySymbol} ${actualCashCounted.toFixed(2)}. Variance: ${this.getActiveTenant().currencySymbol} ${discrepancy.toFixed(2)} (${discrepancy === 0 ? 'Balanced' : discrepancy > 0 ? 'Overage' : 'Shortage'}). Ref: ${closedShift.zReportNumber}`,
+      amount: Math.abs(discrepancy),
+      flagSeverity: discrepancy === 0 ? 'info' : 'alert',
+    });
 
     this.shiftsHistory.unshift(closedShift);
     this.activeShift = null;
@@ -781,6 +1086,60 @@ class StorageEngine {
         amount: 185000,
       },
     ];
+  }
+
+  // Pre-seed realistic past orders across multiple days for Analytics & Reporting
+  private seedInitialOrders(): SaleOrder[] {
+    const orders: SaleOrder[] = [];
+    const prods = INITIAL_PRODUCTS['tenant-retail'];
+    const now = Date.now();
+
+    const sampleDays = [
+      { daysAgo: 6, count: 8, baseRevenue: 4200 },
+      { daysAgo: 5, count: 11, baseRevenue: 5900 },
+      { daysAgo: 4, count: 9, baseRevenue: 4800 },
+      { daysAgo: 3, count: 14, baseRevenue: 7800 },
+      { daysAgo: 2, count: 12, baseRevenue: 6400 },
+      { daysAgo: 1, count: 16, baseRevenue: 8900 },
+      { daysAgo: 0, count: 7, baseRevenue: 3800 },
+    ];
+
+    sampleDays.forEach((day, dayIdx) => {
+      for (let i = 0; i < day.count; i++) {
+        const p1 = prods[i % prods.length];
+        const p2 = prods[(i + 2) % prods.length];
+        const subtotal = p1.sellingPrice * 2 + p2.sellingPrice;
+        const tax = subtotal * 0.16;
+        const total = subtotal + tax;
+        const methods: SaleOrder['paymentMethod'][] = ['cash', 'card', 'mobile_money'];
+        const method = methods[i % methods.length];
+
+        orders.push({
+          id: `seed-ord-${dayIdx}-${i}`,
+          idempotencyKey: `SEED-KEY-${dayIdx}-${i}`,
+          orderNumber: `ORD-${84000 + dayIdx * 100 + i}`,
+          shiftId: 'seed-shift',
+          cashierName: 'Jane Mwangi',
+          tenantId: 'tenant-retail',
+          items: [
+            { product: p1, quantity: 2, unitPrice: p1.sellingPrice },
+            { product: p2, quantity: 1, unitPrice: p2.sellingPrice },
+          ],
+          subtotal,
+          tax,
+          discount: 0,
+          total,
+          paymentMethod: method,
+          amountTendered: total,
+          changeDue: 0,
+          timestamp: new Date(now - day.daysAgo * 86400000 - i * 3600000).toISOString(),
+          syncStatus: 'synced',
+          printed: true,
+        });
+      }
+    });
+
+    return orders;
   }
 }
 

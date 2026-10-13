@@ -12,6 +12,7 @@ import { HospitalityView } from './components/hospitality/HospitalityView';
 import { InventoryView } from './components/inventory/InventoryView';
 import { ShiftManagerView } from './components/shifts/ShiftManagerView';
 import { LedgerView } from './components/finance/LedgerView';
+import { AnalyticsView } from './components/analytics/AnalyticsView';
 import { ReceiptModal } from './components/hardware/ReceiptModal';
 import { SyncCenterModal } from './components/sync/SyncCenterModal';
 import { WifiOff } from 'lucide-react';
@@ -85,6 +86,10 @@ export default function App() {
 
         {activeTab === 'ledger' && (
           <LedgerView tenant={activeTenant} />
+        )}
+
+        {activeTab === 'analytics' && (
+          <AnalyticsView currentTenant={activeTenant} />
         )}
       </main>
 

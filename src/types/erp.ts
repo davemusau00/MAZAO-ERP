@@ -148,3 +148,115 @@ export interface OutboxItem {
   status: 'pending' | 'synced' | 'failed';
   error?: string;
 }
+
+export type UserRole = 'cashier' | 'manager' | 'admin';
+
+export type Permission =
+  | 'pos.sell'
+  | 'pos.discount_override'
+  | 'pos.price_override'
+  | 'pos.void_item'
+  | 'shift.open'
+  | 'shift.payout'
+  | 'shift.close'
+  | 'shift.view_audit'
+  | 'rooms.checkin'
+  | 'rooms.checkout'
+  | 'rooms.manage_folios'
+  | 'inventory.adjust'
+  | 'ledger.view'
+  | 'analytics.view'
+  | 'system.manage_conflicts';
+
+export interface StaffUser {
+  id: string;
+  name: string;
+  role: UserRole;
+  pin: string;
+  title: string;
+  badgeNumber: string;
+}
+
+export const ROLE_PERMISSIONS: Record<UserRole, Permission[]> = {
+  cashier: [
+    'pos.sell',
+    'shift.open',
+    'shift.close',
+    'rooms.checkin',
+  ],
+  manager: [
+    'pos.sell',
+    'pos.discount_override',
+    'pos.price_override',
+    'pos.void_item',
+    'shift.open',
+    'shift.payout',
+    'shift.close',
+    'shift.view_audit',
+    'rooms.checkin',
+    'rooms.checkout',
+    'rooms.manage_folios',
+    'inventory.adjust',
+    'analytics.view',
+    'system.manage_conflicts',
+  ],
+  admin: [
+    'pos.sell',
+    'pos.discount_override',
+    'pos.price_override',
+    'pos.void_item',
+    'shift.open',
+    'shift.payout',
+    'shift.close',
+    'shift.view_audit',
+    'rooms.checkin',
+    'rooms.checkout',
+    'rooms.manage_folios',
+    'inventory.adjust',
+    'ledger.view',
+    'analytics.view',
+    'system.manage_conflicts',
+  ],
+};
+
+export type ShiftAuditAction =
+  | 'opening_float'
+  | 'cash_payout'
+  | 'void_line_item'
+  | 'price_override'
+  | 'manual_discount'
+  | 'emergency_drawer_kick'
+  | 'shift_close_variance';
+
+export interface ShiftAuditLog {
+  id: string;
+  shiftId: string;
+  timestamp: string;
+  staffName: string;
+  staffRole: UserRole;
+  action: ShiftAuditAction;
+  details: string;
+  amount?: number;
+  authorizedBy?: string;
+  flagSeverity: 'info' | 'warning' | 'alert';
+}
+
+export type ConflictResolutionStrategy =
+  | 'commutative_delta'
+  | 'first_write_wins'
+  | 'escalation_required';
+
+export interface SyncConflict {
+  id: string;
+  entityType: 'stock_delta' | 'room_booking' | 'price_override';
+  entityId: string;
+  title: string;
+  clientDevice: string;
+  serverState: any;
+  clientState: any;
+  conflictStrategy: ConflictResolutionStrategy;
+  status: 'auto_resolved' | 'escalation_pending' | 'manually_resolved';
+  timestamp: string;
+  resolutionDetails: string;
+}
+
