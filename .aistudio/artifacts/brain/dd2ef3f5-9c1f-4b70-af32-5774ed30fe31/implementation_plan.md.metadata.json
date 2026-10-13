@@ -1,0 +1,6 @@
+{
+  "summary": "Comprehensive architectural blueprint and implementation plan for Mazao ERP, a multi-tenant, PWA-first modular business operating system. Covers the multi-vertical sandbox (Retail POS, Hospitality/Rooms, Farm Estate, Restaurant), high-contrast OLED dark terminal visual design, durable offline-first synchronization with IndexedDB, silent thermal receipt printing, shift management, and double-entry financial reconciliation.",
+  "updatedAt": "2026-10-13T16:17:39.017573036Z",
+  "requestFeedback": true,
+  "userFacing": true
+}
