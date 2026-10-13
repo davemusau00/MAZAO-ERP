@@ -52,13 +52,24 @@ export const ReceiptModal: React.FC<ReceiptModalProps> = ({ order, tenant, onClo
 
         {/* Thermal Slip Simulator Container */}
         <div className="p-5 bg-zinc-950/90 flex justify-center">
-          <div className="w-full max-w-[320px] bg-white text-zinc-950 p-5 font-mono text-[11px] leading-relaxed shadow-lg rounded-t-sm relative border-t-4 border-dashed border-zinc-400 select-all">
-            {/* Top Zig-Zag receipt tear edge styling */}
-            <div className="text-center font-bold text-xs uppercase tracking-tight mb-1">
+          <div className={`w-full ${tenant.paperWidth === '58mm' ? 'max-w-[260px]' : 'max-w-[320px]'} bg-white text-zinc-950 p-5 font-mono text-[11px] leading-relaxed shadow-lg rounded-t-sm relative border-t-4 border-dashed border-zinc-400 select-all`}>
+            {/* Logo if configured */}
+            {tenant.logoImage && tenant.showLogoOnReceipt !== false && (
+              <div className="text-center mb-2">
+                <img
+                  src={tenant.logoImage}
+                  alt="Store Logo"
+                  className="max-h-12 max-w-[140px] mx-auto object-contain filter grayscale contrast-125"
+                />
+              </div>
+            )}
+
+            {/* Top Store details */}
+            <div className="text-center font-bold text-xs uppercase tracking-tight mb-0.5">
               {tenant.name}
             </div>
             <div className="text-center text-[10px] text-zinc-600 mb-0.5">{tenant.tagline}</div>
-            <div className="text-center text-[9px] text-zinc-500 mb-3">{tenant.address} · {tenant.phone}</div>
+            <div className="text-center text-[9px] text-zinc-500 mb-2">{tenant.address} · {tenant.phone}</div>
 
             <div className="border-t border-dashed border-zinc-400 my-2"></div>
 
@@ -68,12 +79,18 @@ export const ReceiptModal: React.FC<ReceiptModalProps> = ({ order, tenant, onClo
             </div>
             <div className="flex justify-between text-[10px] mb-1">
               <span>STAFF: {order.cashierName}</span>
-              <span className="uppercase">{order.paymentMethod.replace('_', ' ')}</span>
+              <span className="uppercase font-semibold">{order.paymentMethod.replace('_', ' ')}</span>
             </div>
 
             {order.roomChargeRef && (
-              <div className="text-[10px] font-bold bg-zinc-100 px-1 py-0.5 rounded my-1 text-zinc-800">
+              <div className="text-[10px] font-bold bg-zinc-100 px-1.5 py-0.5 rounded my-1 text-zinc-800 border border-zinc-200">
                 BILLED TO ROOM {order.roomChargeRef.roomNumber} ({order.roomChargeRef.guestName})
+              </div>
+            )}
+
+            {order.customerAccountRef && (
+              <div className="text-[10px] font-bold bg-zinc-100 px-1.5 py-0.5 rounded my-1 text-zinc-800 border border-zinc-200">
+                CHARGED TO ACCOUNT: {order.customerAccountRef.customerName.toUpperCase()}
               </div>
             )}
 
@@ -128,19 +145,41 @@ export const ReceiptModal: React.FC<ReceiptModalProps> = ({ order, tenant, onClo
                   </div>
                 </>
               )}
+              {order.customerAccountRef && (
+                <div className="flex justify-between text-[10px] font-semibold text-zinc-800 pt-1 border-t border-zinc-200">
+                  <span>New Customer Bal:</span>
+                  <span className="tabular-nums">{tenant.currencySymbol} {order.customerAccountRef.newBalance.toFixed(2)}</span>
+                </div>
+              )}
             </div>
 
-            <div className="border-t border-dashed border-zinc-400 my-3"></div>
+            {/* Uploaded Payment QR or Till No */}
+            {tenant.receiptQrImage && tenant.showQrOnReceipt !== false ? (
+              <div className="my-2.5 text-center pt-1 border-t border-dashed border-zinc-300">
+                <img
+                  src={tenant.receiptQrImage}
+                  alt="Scan to Pay QR"
+                  className="w-20 h-20 mx-auto object-contain p-0.5 border border-zinc-300 filter grayscale"
+                />
+                <div className="text-[9px] font-bold text-zinc-800 mt-0.5">SCAN TO PAY</div>
+                {tenant.tillNumber && (
+                  <div className="text-[9px] text-zinc-600 font-mono">TILL NO: {tenant.tillNumber}</div>
+                )}
+              </div>
+            ) : (tenant.tillNumber ? (
+              <div className="my-2 text-center text-[10px] font-bold text-zinc-800 py-1 bg-zinc-50 border border-zinc-200 rounded">
+                BUY GOODS TILL: {tenant.tillNumber}
+              </div>
+            ) : null)}
+
+            <div className="border-t border-dashed border-zinc-400 my-2"></div>
             <div className="text-center text-[9px] text-zinc-600 leading-tight">
               {tenant.receiptFooter}
             </div>
 
-            <div className="mt-3 text-center">
-              <div className="text-[12px] tracking-[4px] font-mono select-none">
-                |||| || |||||| | |||| ||
-              </div>
-              <div className="text-[8px] text-zinc-400 mt-0.5">
-                {order.idempotencyKey.slice(0, 18)}
+            <div className="mt-2 text-center">
+              <div className="text-[8px] text-zinc-400 font-mono">
+                AUTH REF: {order.idempotencyKey.slice(0, 16)}
               </div>
             </div>
 

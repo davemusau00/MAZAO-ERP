@@ -324,7 +324,7 @@ export const PointOfSaleView: React.FC<PointOfSaleViewProps> = ({
                   : 'bg-zinc-900 border border-zinc-800/80 text-zinc-400 hover:text-zinc-200'
               }`}
             >
-              {cat}
+              {cat.replace('_', ' ')}
             </button>
           ))}
         </div>
@@ -338,7 +338,7 @@ export const PointOfSaleView: React.FC<PointOfSaleViewProps> = ({
         )}
 
         {/* Product Grid: Independently scrollable with top & bottom breathing room */}
-        <div className="flex-1 min-h-0 overflow-y-auto pr-1 grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-4 gap-2 sm:gap-3.5 pb-2 pt-1">
+        <div className="flex-1 min-h-0 overflow-y-auto pr-1 grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-4 gap-2 sm:gap-3.5 pb-4 pt-1.5">
           {filteredProducts.map(product => {
             const isLowStock = product.stockOnHand <= product.reorderPoint;
             return (
@@ -349,7 +349,9 @@ export const PointOfSaleView: React.FC<PointOfSaleViewProps> = ({
               >
                 <div>
                   <div className="flex items-center justify-between gap-1 mb-1">
-                    <span className="text-[10px] font-mono text-zinc-500 uppercase truncate max-w-[65px] sm:max-w-none">{product.category}</span>
+                    <span className="text-[10px] font-mono text-zinc-400 uppercase tracking-wide truncate flex-1 pr-1">
+                      {product.category.replace('_', ' ')}
+                    </span>
                     <span className={`text-[10px] font-mono tabular-nums shrink-0 ${isLowStock ? 'text-amber-400 font-semibold' : 'text-zinc-500'}`}>
                       {product.stockOnHand} {product.unit}
                     </span>

@@ -16,6 +16,13 @@ export interface TenantProfile {
   tagline: string;
   receiptHeader: string;
   receiptFooter: string;
+  tillNumber?: string;
+  paybillNumber?: string;
+  logoImage?: string;
+  receiptQrImage?: string;
+  showLogoOnReceipt?: boolean;
+  showQrOnReceipt?: boolean;
+  paperWidth?: '80mm' | '58mm';
 }
 
 export interface ProductItem {
@@ -41,7 +48,36 @@ export interface CartItem {
   notes?: string;
 }
 
-export type PaymentMethod = 'cash' | 'card' | 'mobile_money' | 'room_folio';
+export type PaymentMethod = 'cash' | 'card' | 'mobile_money' | 'room_folio' | 'customer_credit';
+
+export interface CustomerAccount {
+  id: string;
+  tenantId: string;
+  name: string;
+  phone: string;
+  email?: string;
+  nationalIdOrTaxId?: string;
+  creditLimit: number;
+  currentBalance: number;
+  status: 'active' | 'suspended';
+  notes?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface CustomerTransaction {
+  id: string;
+  customerId: string;
+  tenantId: string;
+  timestamp: string;
+  type: 'charge' | 'payment' | 'adjustment';
+  amount: number;
+  runningBalance: number;
+  reference: string;
+  paymentMethod?: PaymentMethod;
+  notes?: string;
+  cashierName: string;
+}
 
 export interface SaleOrder {
   id: string;
@@ -58,14 +94,24 @@ export interface SaleOrder {
   paymentMethod: PaymentMethod;
   amountTendered: number;
   changeDue: number;
+  timestamp: string;
+  syncStatus: 'synced' | 'synced_server' | 'pending_outbox';
   roomChargeRef?: {
     roomId: string;
     roomNumber: string;
     guestName: string;
   };
-  timestamp: string;
-  syncStatus: 'synced' | 'pending_outbox';
-  printed: boolean;
+  customerAccountRef?: {
+    customerId: string;
+    customerName: string;
+    customerPhone?: string;
+    previousBalance: number;
+    newBalance: number;
+  };
+  status?: 'completed' | 'refunded';
+  refundReason?: string;
+  refundTimestamp?: string;
+  printed?: boolean;
 }
 
 export type RoomStatus = 'vacant_clean' | 'vacant_dirty' | 'occupied' | 'reserved' | 'maintenance';
@@ -164,8 +210,17 @@ export type Permission =
   | 'rooms.checkout'
   | 'rooms.manage_folios'
   | 'inventory.adjust'
+  | 'products.manage'
+  | 'customers.view'
+  | 'customers.charge'
+  | 'customers.settle'
+  | 'customers.manage'
+  | 'sales.history'
+  | 'sales.refund'
   | 'ledger.view'
   | 'analytics.view'
+  | 'settings.view'
+  | 'settings.manage'
   | 'system.manage_conflicts';
 
 export interface StaffUser {
@@ -183,6 +238,9 @@ export const ROLE_PERMISSIONS: Record<UserRole, Permission[]> = {
     'shift.open',
     'shift.close',
     'rooms.checkin',
+    'customers.view',
+    'customers.charge',
+    'sales.history',
   ],
   manager: [
     'pos.sell',
@@ -197,7 +255,15 @@ export const ROLE_PERMISSIONS: Record<UserRole, Permission[]> = {
     'rooms.checkout',
     'rooms.manage_folios',
     'inventory.adjust',
+    'products.manage',
+    'customers.view',
+    'customers.charge',
+    'customers.settle',
+    'customers.manage',
+    'sales.history',
+    'sales.refund',
     'analytics.view',
+    'settings.view',
     'system.manage_conflicts',
   ],
   admin: [
@@ -213,8 +279,17 @@ export const ROLE_PERMISSIONS: Record<UserRole, Permission[]> = {
     'rooms.checkout',
     'rooms.manage_folios',
     'inventory.adjust',
+    'products.manage',
+    'customers.view',
+    'customers.charge',
+    'customers.settle',
+    'customers.manage',
+    'sales.history',
+    'sales.refund',
     'ledger.view',
     'analytics.view',
+    'settings.view',
+    'settings.manage',
     'system.manage_conflicts',
   ],
 };

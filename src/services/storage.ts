@@ -19,7 +19,10 @@ import {
   Permission,
   ROLE_PERMISSIONS,
   ShiftAuditLog,
-  SyncConflict
+  SyncConflict,
+  CustomerAccount,
+  CustomerTransaction,
+  PaymentMethod
 } from '../types/erp';
 
 // Seed tenants
@@ -36,6 +39,13 @@ export const INITIAL_TENANTS: TenantProfile[] = [
     tagline: 'High-Velocity Fast Retail & Building Supplies',
     receiptHeader: 'APEX SUPERMARKET & WHOLESALE',
     receiptFooter: 'Thank you for shopping at Apex! Goods once sold cannot be returned without receipt.',
+    tillNumber: '884129',
+    paybillNumber: '522522',
+    paperWidth: '80mm',
+    showLogoOnReceipt: true,
+    showQrOnReceipt: true,
+    logoImage: '',
+    receiptQrImage: '',
   },
   {
     id: 'tenant-lodge',
@@ -49,6 +59,13 @@ export const INITIAL_TENANTS: TenantProfile[] = [
     tagline: 'Luxury Bush Retreat & Eco-Conservancy',
     receiptHeader: 'SAVANNA RIDGE SAFARI LODGE',
     receiptFooter: 'Thank you for staying with us. Conservation levy included in all rates.',
+    tillNumber: '719200',
+    paybillNumber: '400200',
+    paperWidth: '80mm',
+    showLogoOnReceipt: true,
+    showQrOnReceipt: true,
+    logoImage: '',
+    receiptQrImage: '',
   },
   {
     id: 'tenant-farm',
@@ -62,6 +79,13 @@ export const INITIAL_TENANTS: TenantProfile[] = [
     tagline: 'Farm-Fresh Dairy, Avocados & Specialty Nursery',
     receiptHeader: 'GREEN VALLEY AGRO-ESTATE',
     receiptFooter: 'Harvested daily. Traceable from soil to dining table.',
+    tillNumber: '633812',
+    paybillNumber: '247247',
+    paperWidth: '80mm',
+    showLogoOnReceipt: true,
+    showQrOnReceipt: true,
+    logoImage: '',
+    receiptQrImage: '',
   },
   {
     id: 'tenant-bistro',
@@ -75,6 +99,140 @@ export const INITIAL_TENANTS: TenantProfile[] = [
     tagline: 'Artisan Wood-Fired Kitchen & Craft Bar',
     receiptHeader: 'THE BRASS FOUNDRY BISTRO',
     receiptFooter: 'Service charge not included. Tips go directly to floor & kitchen team.',
+    tillNumber: '920140',
+    paybillNumber: '888880',
+    paperWidth: '80mm',
+    showLogoOnReceipt: true,
+    showQrOnReceipt: true,
+    logoImage: '',
+    receiptQrImage: '',
+  },
+];
+
+// Seed Customer Accounts
+export const INITIAL_CUSTOMERS: CustomerAccount[] = [
+  {
+    id: 'cust-1',
+    tenantId: 'tenant-retail',
+    name: 'Carol Wanjiku',
+    phone: '+254 712 345 678',
+    email: 'carol.w@techsolutions.ke',
+    nationalIdOrTaxId: '28491024',
+    creditLimit: 10000,
+    currentBalance: 3300,
+    status: 'active',
+    notes: 'Tech Solutions Ltd office pantry regular account',
+    createdAt: new Date(Date.now() - 30 * 86400000).toISOString(),
+    updatedAt: new Date().toISOString(),
+  },
+  {
+    id: 'cust-2',
+    tenantId: 'tenant-retail',
+    name: 'Peter Kamau',
+    phone: '+254 723 456 789',
+    email: 'kamau.builders@gmail.com',
+    nationalIdOrTaxId: '19482011',
+    creditLimit: 15000,
+    currentBalance: 7200,
+    status: 'active',
+    notes: 'Contractor wholesale account - 30 day credit agreement',
+    createdAt: new Date(Date.now() - 45 * 86400000).toISOString(),
+    updatedAt: new Date().toISOString(),
+  },
+  {
+    id: 'cust-3',
+    tenantId: 'tenant-retail',
+    name: 'Mama Mboga Supplies',
+    phone: '+254 734 567 890',
+    email: 'mboga.market@outlook.com',
+    nationalIdOrTaxId: 'A004928172K',
+    creditLimit: 8000,
+    currentBalance: 1800,
+    status: 'active',
+    notes: 'Weekly market stall bulk procurement',
+    createdAt: new Date(Date.now() - 20 * 86400000).toISOString(),
+    updatedAt: new Date().toISOString(),
+  },
+  {
+    id: 'cust-4',
+    tenantId: 'tenant-retail',
+    name: 'Dr. Amina Mohamed',
+    phone: '+254 745 678 901',
+    email: 'amina.m@nairobihospital.org',
+    nationalIdOrTaxId: '21948201',
+    creditLimit: 25000,
+    currentBalance: 0,
+    status: 'active',
+    notes: 'VIP customer account - zero outstanding balance',
+    createdAt: new Date(Date.now() - 15 * 86400000).toISOString(),
+    updatedAt: new Date().toISOString(),
+  },
+  {
+    id: 'cust-5',
+    tenantId: 'tenant-retail',
+    name: 'John Otieno',
+    phone: '+254 756 789 012',
+    email: 'jotieno@ke.org',
+    nationalIdOrTaxId: '30491822',
+    creditLimit: 5000,
+    currentBalance: 5000,
+    status: 'suspended',
+    notes: 'Credit limit reached. 30+ days overdue account hold.',
+    createdAt: new Date(Date.now() - 60 * 86400000).toISOString(),
+    updatedAt: new Date().toISOString(),
+  },
+];
+
+// Seed Customer Transactions
+export const INITIAL_CUSTOMER_TX: CustomerTransaction[] = [
+  {
+    id: 'ctx-1',
+    customerId: 'cust-1',
+    tenantId: 'tenant-retail',
+    timestamp: new Date(Date.now() - 5 * 86400000).toISOString(),
+    type: 'charge',
+    amount: 1850,
+    runningBalance: 1850,
+    reference: 'ORD-84102',
+    notes: 'POS Sale - Beverages & Bakery',
+    cashierName: 'Jane Mwangi',
+  },
+  {
+    id: 'ctx-2',
+    customerId: 'cust-1',
+    tenantId: 'tenant-retail',
+    timestamp: new Date(Date.now() - 2 * 86400000).toISOString(),
+    type: 'charge',
+    amount: 1450,
+    runningBalance: 3300,
+    reference: 'ORD-84221',
+    notes: 'POS Sale - Pantry Supplies',
+    cashierName: 'Jane Mwangi',
+  },
+  {
+    id: 'ctx-3',
+    customerId: 'cust-2',
+    tenantId: 'tenant-retail',
+    timestamp: new Date(Date.now() - 10 * 86400000).toISOString(),
+    type: 'charge',
+    amount: 12200,
+    runningBalance: 12200,
+    reference: 'ORD-83950',
+    notes: 'Bulk Hardware - Cement & Wire Nails',
+    cashierName: 'Jane Mwangi',
+  },
+  {
+    id: 'ctx-4',
+    customerId: 'cust-2',
+    tenantId: 'tenant-retail',
+    timestamp: new Date(Date.now() - 3 * 86400000).toISOString(),
+    type: 'payment',
+    amount: 5000,
+    runningBalance: 7200,
+    reference: 'PAY-MPESA-QRT89',
+    paymentMethod: 'mobile_money',
+    notes: 'Partial payment received via M-Pesa Till',
+    cashierName: 'David Kibet',
   },
 ];
 
@@ -341,6 +499,7 @@ export const INITIAL_CONFLICTS: SyncConflict[] = [
 class StorageEngine {
   private tenantId: string = 'tenant-retail';
   private isSimulatedOnline: boolean = true;
+  private tenants: TenantProfile[] = INITIAL_TENANTS;
   private products: Record<string, ProductItem[]> = {};
   private rooms: Room[] = [];
   private orders: SaleOrder[] = [];
@@ -353,6 +512,8 @@ class StorageEngine {
   private activeStaffId: string = 'staff-1';
   private auditLogs: ShiftAuditLog[] = [];
   private conflicts: SyncConflict[] = [];
+  private customers: CustomerAccount[] = INITIAL_CUSTOMERS;
+  private customerTransactions: CustomerTransaction[] = INITIAL_CUSTOMER_TX;
   private listeners: Set<() => void> = new Set();
 
   constructor() {
@@ -365,6 +526,18 @@ class StorageEngine {
 
     const savedSimOnline = localStorage.getItem('mazao_sim_online');
     if (savedSimOnline !== null) this.isSimulatedOnline = savedSimOnline === 'true';
+
+    const savedTenants = localStorage.getItem('mazao_tenants');
+    this.tenants = savedTenants ? JSON.parse(savedTenants) : INITIAL_TENANTS;
+
+    const savedCustomers = localStorage.getItem('mazao_customers');
+    this.customers = savedCustomers ? JSON.parse(savedCustomers) : INITIAL_CUSTOMERS;
+
+    const savedCustTx = localStorage.getItem('mazao_customer_tx');
+    this.customerTransactions = savedCustTx ? JSON.parse(savedCustTx) : INITIAL_CUSTOMER_TX;
+
+    const savedStaffUsers = localStorage.getItem('mazao_staff_users');
+    this.staffUsers = savedStaffUsers ? JSON.parse(savedStaffUsers) : INITIAL_STAFF;
 
     const savedProducts = localStorage.getItem('mazao_products');
     this.products = savedProducts ? JSON.parse(savedProducts) : INITIAL_PRODUCTS;
@@ -421,6 +594,10 @@ class StorageEngine {
     try {
       localStorage.setItem('mazao_active_tenant', this.tenantId);
       localStorage.setItem('mazao_sim_online', String(this.isSimulatedOnline));
+      localStorage.setItem('mazao_tenants', JSON.stringify(this.tenants));
+      localStorage.setItem('mazao_customers', JSON.stringify(this.customers));
+      localStorage.setItem('mazao_customer_tx', JSON.stringify(this.customerTransactions));
+      localStorage.setItem('mazao_staff_users', JSON.stringify(this.staffUsers));
       localStorage.setItem('mazao_products', JSON.stringify(this.products));
       localStorage.setItem('mazao_rooms', JSON.stringify(this.rooms));
       localStorage.setItem('mazao_orders', JSON.stringify(this.orders));
@@ -477,6 +654,34 @@ class StorageEngine {
     const staff = this.getActiveStaff();
     const perms = ROLE_PERMISSIONS[staff.role] || [];
     return perms.includes(perm);
+  }
+
+  public createStaffUser(staff: Omit<StaffUser, 'id'>): StaffUser {
+    const newStaff: StaffUser = {
+      ...staff,
+      id: 'staff-' + Date.now(),
+    };
+    this.staffUsers.push(newStaff);
+    this.persist();
+    return newStaff;
+  }
+
+  public updateStaffUser(staff: StaffUser): StaffUser {
+    const idx = this.staffUsers.findIndex(s => s.id === staff.id);
+    if (idx !== -1) {
+      this.staffUsers[idx] = { ...staff };
+      this.persist();
+    }
+    return staff;
+  }
+
+  public deactivateStaffUser(staffId: string): void {
+    if (this.staffUsers.length <= 1) return; // prevent zero staff
+    this.staffUsers = this.staffUsers.filter(s => s.id !== staffId);
+    if (this.activeStaffId === staffId) {
+      this.activeStaffId = this.staffUsers[0].id;
+    }
+    this.persist();
   }
 
   // --- Granular Shift Audit Log Engine ---
@@ -596,13 +801,24 @@ class StorageEngine {
     return newConf;
   }
 
-  // --- Tenants ---
+  // --- Tenants & Settings ---
   public getTenants(): TenantProfile[] {
-    return INITIAL_TENANTS;
+    return this.tenants;
   }
 
   public getActiveTenant(): TenantProfile {
-    return INITIAL_TENANTS.find(t => t.id === this.tenantId) || INITIAL_TENANTS[0];
+    return this.tenants.find(t => t.id === this.tenantId) || this.tenants[0];
+  }
+
+  public updateTenantProfile(updated: TenantProfile): TenantProfile {
+    const idx = this.tenants.findIndex(t => t.id === updated.id);
+    if (idx !== -1) {
+      this.tenants[idx] = { ...updated };
+    } else {
+      this.tenants.push({ ...updated });
+    }
+    this.persist();
+    return updated;
   }
 
   public switchTenant(newTenantId: string): void {
@@ -611,6 +827,145 @@ class StorageEngine {
       this.activeShift.tenantId = newTenantId;
     }
     this.persist();
+  }
+
+  // --- Customer Credit & Accounts Engine ---
+  public getCustomers(tenantId?: string): CustomerAccount[] {
+    const target = tenantId || this.tenantId;
+    return this.customers.filter(c => c.tenantId === target);
+  }
+
+  public getAllCustomers(): CustomerAccount[] {
+    return this.customers;
+  }
+
+  public getCustomerById(customerId: string): CustomerAccount | undefined {
+    return this.customers.find(c => c.id === customerId);
+  }
+
+  public createCustomer(cust: Omit<CustomerAccount, 'id' | 'createdAt' | 'updatedAt'>): CustomerAccount {
+    const now = new Date().toISOString();
+    const newCust: CustomerAccount = {
+      ...cust,
+      id: 'cust-' + Date.now(),
+      createdAt: now,
+      updatedAt: now,
+    };
+    this.customers.unshift(newCust);
+    this.persist();
+    return newCust;
+  }
+
+  public updateCustomer(cust: CustomerAccount): CustomerAccount {
+    const idx = this.customers.findIndex(c => c.id === cust.id);
+    if (idx !== -1) {
+      this.customers[idx] = { ...cust, updatedAt: new Date().toISOString() };
+      this.persist();
+    }
+    return cust;
+  }
+
+  public getCustomerTransactions(customerId: string): CustomerTransaction[] {
+    return this.customerTransactions
+      .filter(tx => tx.customerId === customerId)
+      .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
+  }
+
+  public chargeCustomerAccount(customerId: string, amount: number, orderRef: string, notes?: string): CustomerTransaction {
+    const customer = this.getCustomerById(customerId);
+    if (!customer) throw new Error('Customer account not found');
+
+    const newBalance = customer.currentBalance + amount;
+    customer.currentBalance = newBalance;
+    customer.updatedAt = new Date().toISOString();
+
+    const tx: CustomerTransaction = {
+      id: 'ctx-' + Date.now(),
+      customerId,
+      tenantId: customer.tenantId,
+      timestamp: new Date().toISOString(),
+      type: 'charge',
+      amount,
+      runningBalance: newBalance,
+      reference: orderRef,
+      paymentMethod: 'customer_credit',
+      notes: notes || `POS Sale #${orderRef}`,
+      cashierName: this.getActiveStaff().name,
+    };
+
+    this.customerTransactions.unshift(tx);
+    this.persist();
+    return tx;
+  }
+
+  public settleCustomerAccount(
+    customerId: string,
+    amount: number,
+    paymentMethod: PaymentMethod,
+    reference: string,
+    notes?: string
+  ): CustomerTransaction {
+    const customer = this.getCustomerById(customerId);
+    if (!customer) throw new Error('Customer account not found');
+
+    const newBalance = Math.max(0, customer.currentBalance - amount);
+    customer.currentBalance = newBalance;
+    customer.updatedAt = new Date().toISOString();
+
+    const tx: CustomerTransaction = {
+      id: 'ctx-' + Date.now(),
+      customerId,
+      tenantId: customer.tenantId,
+      timestamp: new Date().toISOString(),
+      type: 'payment',
+      amount,
+      runningBalance: newBalance,
+      reference,
+      paymentMethod,
+      notes: notes || `Credit repayment received via ${paymentMethod.replace('_', ' ')}`,
+      cashierName: this.getActiveStaff().name,
+    };
+
+    this.customerTransactions.unshift(tx);
+
+    // If shift is open, update shift totals
+    if (this.activeShift && this.activeShift.status === 'open') {
+      if (paymentMethod === 'cash') {
+        this.activeShift.cashSales += amount;
+        this.activeShift.expectedCash += amount;
+      } else if (paymentMethod === 'mobile_money') {
+        this.activeShift.mobileSales += amount;
+      } else if (paymentMethod === 'card') {
+        this.activeShift.cardSales += amount;
+      }
+    }
+
+    // Double-entry General Ledger record
+    const debitAccount =
+      paymentMethod === 'cash'
+        ? 'Cash in Till (Drawer)'
+        : paymentMethod === 'mobile_money'
+        ? 'Mobile Money Till'
+        : 'Operating Bank Account';
+
+    this.recordLedgerEntry(
+      reference,
+      `Credit Settlement - ${customer.name} (Ref: ${reference})`,
+      'Credit Repayment',
+      debitAccount,
+      'Accounts Receivable - Customer Credit',
+      amount
+    );
+
+    this.recordAuditLog({
+      action: 'cash_payout',
+      details: `Credit repayment settled for ${customer.name}: ${amount} via ${paymentMethod}`,
+      amount,
+      flagSeverity: 'info',
+    });
+
+    this.persist();
+    return tx;
   }
 
   // --- Network Offline Simulation ---
@@ -774,22 +1129,48 @@ class StorageEngine {
     this.persist();
   }
 
-  public checkOutGuest(roomId: string): FolioCharge[] {
+  public settleRoomFolio(
+    roomId: string,
+    paymentMethod: PaymentMethod,
+    amountTendered: number,
+    notes?: string
+  ): { room: Room; charges: FolioCharge[]; changeDue: number; totalPaid: number } {
     const rm = this.rooms.find(r => r.id === roomId);
-    if (!rm) return [];
+    if (!rm) throw new Error('Room not found');
 
     const finalizedCharges = [...rm.folioCharges];
     const totalDue = finalizedCharges.reduce((acc, c) => acc + c.amount, 0);
+    const changeDue = Math.max(0, amountTendered - totalDue);
 
     if (totalDue > 0) {
+      const debitAccount =
+        paymentMethod === 'cash'
+          ? 'Cash in Till (Drawer)'
+          : paymentMethod === 'mobile_money'
+          ? 'Mobile Money Till'
+          : paymentMethod === 'card'
+          ? 'Card Clearing Merchant'
+          : 'Accounts Receivable - Corporate Ledger';
+
       this.recordLedgerEntry(
         'FOLIO-SETTLE-' + rm.number,
-        `Guest Checkout Settlement Rm ${rm.number} (${rm.guestName})`,
+        `Guest Folio Settlement Rm ${rm.number} (${rm.guestName || 'Guest'}) via ${paymentMethod.replace('_', ' ')}${notes ? ` · ${notes}` : ''}`,
         'Hospitality',
-        'Cash & Bank Clearing',
+        debitAccount,
         'Accounts Receivable - Guest Ledger',
         totalDue
       );
+
+      if (this.activeShift && this.activeShift.status === 'open') {
+        if (paymentMethod === 'cash') {
+          this.activeShift.cashSales += totalDue;
+          this.activeShift.expectedCash += totalDue;
+        } else if (paymentMethod === 'mobile_money') {
+          this.activeShift.mobileSales += totalDue;
+        } else if (paymentMethod === 'card') {
+          this.activeShift.cardSales += totalDue;
+        }
+      }
     }
 
     rm.status = 'vacant_dirty';
@@ -800,7 +1181,12 @@ class StorageEngine {
     rm.folioCharges = [];
 
     this.persist();
-    return finalizedCharges;
+    return { room: rm, charges: finalizedCharges, changeDue, totalPaid: totalDue };
+  }
+
+  public checkOutGuest(roomId: string): FolioCharge[] {
+    const result = this.settleRoomFolio(roomId, 'cash', 0);
+    return result.charges;
   }
 
   public updateRoomHousekeeping(roomId: string, status: Room['status']): void {
@@ -816,6 +1202,56 @@ class StorageEngine {
     return this.orders;
   }
 
+  public getOrderById(orderId: string): SaleOrder | undefined {
+    return this.orders.find(o => o.id === orderId || o.orderNumber === orderId);
+  }
+
+  public refundOrder(orderId: string, reason: string, refundMethod: PaymentMethod): SaleOrder {
+    const order = this.orders.find(o => o.id === orderId);
+    if (!order) throw new Error('Order not found');
+
+    order.status = 'refunded';
+    order.refundReason = reason;
+    order.refundTimestamp = new Date().toISOString();
+
+    // Restock items
+    for (const item of order.items) {
+      this.adjustStock(
+        item.product.id,
+        item.quantity,
+        'adjustment',
+        `Return/Refund on #${order.orderNumber}: ${reason}`
+      );
+    }
+
+    // Ledger reversal
+    const creditAccount =
+      refundMethod === 'cash'
+        ? 'Cash in Till (Drawer)'
+        : refundMethod === 'mobile_money'
+        ? 'Mobile Money Till'
+        : 'Card Clearing Merchant';
+
+    this.recordLedgerEntry(
+      `REFUND-${order.orderNumber}`,
+      `Sales Refund for #${order.orderNumber} (${reason})`,
+      'Returns',
+      'Sales Revenue Reversal',
+      creditAccount,
+      order.total
+    );
+
+    this.recordAuditLog({
+      action: 'void_line_item',
+      details: `Full order refund executed for #${order.orderNumber}: ${order.total} (${reason}) via ${refundMethod}`,
+      amount: order.total,
+      flagSeverity: 'warning',
+    });
+
+    this.persist();
+    return order;
+  }
+
   public processSale(orderInput: Omit<SaleOrder, 'id' | 'idempotencyKey' | 'timestamp' | 'syncStatus' | 'printed'>): SaleOrder {
     const now = new Date();
     const idempotencyKey = 'IDEM-' + Math.random().toString(36).substring(2, 10).toUpperCase() + '-' + Date.now();
@@ -826,6 +1262,7 @@ class StorageEngine {
       timestamp: now.toISOString(),
       syncStatus: this.isSimulatedOnline ? 'synced' : 'pending_outbox',
       printed: false,
+      status: 'completed',
     };
 
     for (const item of order.items) {
@@ -844,6 +1281,15 @@ class StorageEngine {
         amount: order.total,
         referenceOrderNumber: order.orderNumber,
       });
+    }
+
+    if (order.paymentMethod === 'customer_credit' && order.customerAccountRef) {
+      this.chargeCustomerAccount(
+        order.customerAccountRef.customerId,
+        order.total,
+        order.orderNumber,
+        `POS Sale #${order.orderNumber}`
+      );
     }
 
     if (this.activeShift && this.activeShift.status === 'open') {
@@ -866,6 +1312,8 @@ class StorageEngine {
         ? 'Card Clearing Merchant'
         : order.paymentMethod === 'mobile_money'
         ? 'Mobile Money Till'
+        : order.paymentMethod === 'customer_credit'
+        ? 'Accounts Receivable - Customer Credit'
         : 'Accounts Receivable - Guest Folios';
 
     this.recordLedgerEntry(
@@ -901,6 +1349,83 @@ class StorageEngine {
 
     this.persist();
     return order;
+  }
+
+  // --- Product Management & Guided Stock Intake ---
+  public createProduct(product: Omit<ProductItem, 'id'>): ProductItem {
+    const newProduct: ProductItem = {
+      ...product,
+      id: 'prod-' + Date.now(),
+    };
+    if (!this.products[this.tenantId]) {
+      this.products[this.tenantId] = [];
+    }
+    this.products[this.tenantId].unshift(newProduct);
+    this.persist();
+    return newProduct;
+  }
+
+  public updateProduct(product: ProductItem): ProductItem {
+    const tenantProducts = this.products[this.tenantId] || [];
+    const idx = tenantProducts.findIndex(p => p.id === product.id);
+    if (idx !== -1) {
+      tenantProducts[idx] = { ...product };
+      this.persist();
+    }
+    return product;
+  }
+
+  public getProductById(id: string): ProductItem | undefined {
+    const tenantProducts = this.products[this.tenantId] || [];
+    return tenantProducts.find(p => p.id === id);
+  }
+
+  public receiveStock(
+    items: { productId: string; quantity: number; costPrice?: number }[],
+    supplierRef: string,
+    notes?: string
+  ): void {
+    let totalIntakeValue = 0;
+    const now = new Date().toISOString();
+
+    for (const item of items) {
+      const prod = this.getProductById(item.productId);
+      if (!prod) continue;
+
+      if (item.costPrice !== undefined && item.costPrice > 0) {
+        prod.costPrice = item.costPrice;
+      }
+
+      prod.stockOnHand += item.quantity;
+      const itemCost = (item.costPrice || prod.costPrice) * item.quantity;
+      totalIntakeValue += itemCost;
+
+      const movement: StockMovement = {
+        id: 'mov-' + Date.now() + '-' + Math.random().toString(36).substring(2, 6),
+        timestamp: now,
+        sku: prod.sku,
+        productName: prod.name,
+        type: 'restock',
+        quantity: item.quantity,
+        balanceAfter: prod.stockOnHand,
+        note: `Stock Intake Ref: ${supplierRef}${notes ? ` · ${notes}` : ''}`,
+        reference: supplierRef,
+      };
+      this.stockMovements.unshift(movement);
+    }
+
+    if (totalIntakeValue > 0) {
+      this.recordLedgerEntry(
+        supplierRef,
+        `Inventory Intake: Ref ${supplierRef}`,
+        'Procurement',
+        'Merchandise Inventory Asset',
+        'Accounts Payable - Trade Suppliers',
+        totalIntakeValue
+      );
+    }
+
+    this.persist();
   }
 
   // --- Shifts & Cash Drawer Balancing ---
