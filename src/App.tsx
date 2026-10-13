@@ -6,7 +6,8 @@
 import React, { useState, useEffect } from 'react';
 import { storage } from './services/storage';
 import { SaleOrder } from './types/erp';
-import { Header, ActiveTab } from './components/Header';
+import { AppShell, ActiveTab } from './components/layout/AppShell';
+import { DiagnosticsDrawer } from './components/layout/DiagnosticsDrawer';
 import { PointOfSaleView } from './components/pos/PointOfSaleView';
 import { HospitalityView } from './components/hospitality/HospitalityView';
 import { InventoryView } from './components/inventory/InventoryView';
@@ -15,20 +16,23 @@ import { LedgerView } from './components/finance/LedgerView';
 import { AnalyticsView } from './components/analytics/AnalyticsView';
 import { ReceiptModal } from './components/hardware/ReceiptModal';
 import { SyncCenterModal } from './components/sync/SyncCenterModal';
-import { WifiOff } from 'lucide-react';
 
 export default function App() {
   const [activeTab, setActiveTab] = useState<ActiveTab>('pos');
   const [activeTenant, setActiveTenant] = useState(storage.getActiveTenant());
   const [tenants] = useState(storage.getTenants());
-  const [isOnline, setIsOnline] = useState(storage.isOnline());
-  const [outboxCount, setOutboxCount] = useState(storage.getOutboxCount());
+  const [, setIsOnline] = useState(storage.isOnline());
+  const [, setOutboxCount] = useState(storage.getOutboxCount());
 
   // Receipt Modal State
   const [completedOrder, setCompletedOrder] = useState<SaleOrder | null>(null);
 
   // Sync Center Modal State
   const [isSyncCenterOpen, setIsSyncCenterOpen] = useState(false);
+
+  // Diagnostics Drawer State
+  const [isDiagnosticsOpen, setIsDiagnosticsOpen] = useState(false);
+  const [diagnosticsBarcode, setDiagnosticsBarcode] = useState<string | null>(null);
 
   // Subscribe to reactive storage changes
   useEffect(() => {
@@ -51,24 +55,28 @@ export default function App() {
     setCompletedOrder(order);
   };
 
+  const handleBarcodeFromDiagnostics = (barcode: string) => {
+    setDiagnosticsBarcode(barcode);
+    setActiveTab('pos');
+  };
+
   return (
-    <div className="min-h-screen bg-[#090b10] text-zinc-100 flex flex-col font-sans select-none antialiased">
-      {/* Top Navigation Bar adhering to Top Bar Contract */}
-      <Header
+    <div className="h-dvh w-screen overflow-hidden bg-[#090b10] text-zinc-100 flex flex-col font-sans select-none antialiased">
+      <AppShell
         activeTab={activeTab}
         onTabChange={setActiveTab}
         activeTenant={activeTenant}
         tenants={tenants}
         onTenantChange={handleTenantChange}
         onOpenSyncCenter={() => setIsSyncCenterOpen(true)}
-      />
-
-      {/* Main Operational Viewport */}
-      <main className="flex-1 flex flex-col overflow-hidden">
+        onOpenDiagnostics={() => setIsDiagnosticsOpen(true)}
+      >
         {activeTab === 'pos' && (
           <PointOfSaleView
             tenant={activeTenant}
             onOrderCompleted={handleOrderCompleted}
+            scannedBarcodeFromDiagnostics={diagnosticsBarcode}
+            onClearScannedBarcode={() => setDiagnosticsBarcode(null)}
           />
         )}
 
@@ -91,21 +99,15 @@ export default function App() {
         {activeTab === 'analytics' && (
           <AnalyticsView currentTenant={activeTenant} />
         )}
-      </main>
+      </AppShell>
 
-      {/* Non-intrusive Offline Toast Indicator */}
-      {!isOnline && (
-        <div
-          onClick={() => setIsSyncCenterOpen(true)}
-          className="fixed bottom-4 left-4 z-40 flex items-center gap-2.5 px-3.5 py-2 rounded-lg bg-zinc-900 border border-amber-600/60 shadow-2xl text-xs font-medium text-amber-300 cursor-pointer hover:bg-zinc-850 transition-colors"
-        >
-          <WifiOff className="w-4 h-4 text-amber-400" />
-          <span>
-            Offline Mode Active · {outboxCount} order{outboxCount === 1 ? '' : 's'} queued locally
-          </span>
-          <span className="text-[10px] text-zinc-500 font-mono underline ml-1">View</span>
-        </div>
-      )}
+      {/* Diagnostics & Simulator Console Drawer */}
+      <DiagnosticsDrawer
+        isOpen={isDiagnosticsOpen}
+        onClose={() => setIsDiagnosticsOpen(false)}
+        onScanBarcode={handleBarcodeFromDiagnostics}
+        onOpenSyncCenter={() => setIsSyncCenterOpen(true)}
+      />
 
       {/* Receipt Preview & ESC/POS Print Modal */}
       <ReceiptModal
